@@ -62,7 +62,7 @@ summation:
 	beq $t0, $zero, end_temp
 	beq $t3, $zero, end_temp
 
-	jal repeated_addition
+	jal mult_lab2
 	end_temp:
 		add $t2, $t2, $v0
 		addi $a3, $a3, -1       # size counter
@@ -71,11 +71,12 @@ summation:
 		j summation
 	
 	
-	repeated_addition:
+	mult_lab2:
 		add $v0, $v0, $t3
 		addi $t0, $t0, -1
-		blez $t0, end_temp
-		j repeated_addition
+		blez $t0, go_back
+		j mult_lab2
+	go_back: 
 		jr $ra
 	
 

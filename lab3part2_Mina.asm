@@ -71,13 +71,13 @@ lui $a3, 0x1001 			# a3- size of array
 ori $a3, $a3, 0x0100
 
 lui $t1, 0x1001				# (address) t1 - sum
-ori $t1, 0x0120
+ori $t1, $t1, 0x0120
 
 add $t2, $zero, $zero			# (value) temporary sum for products
 
 # Stacks for Months
 lui $t4, 0x1001				# Intialize MONTH address stacks at 0x10010140
-ori $t4, 0x0140
+ori $t4, $t4, 0x0140
 sw $t5, 0($t4)				# January	0x10010140
 sw $t6, 4($t4)				# February	0x10010144
 sw $t7, 8($t4)				# March		0x10010148
@@ -95,7 +95,7 @@ scalar_prod:
 	beq $a2, $zero, end_scalar_prod
 	sw $ra, 0($sp)
 	lui $a0, 0x1001			# Every month, initialize the CAR PRICES address
-	ori $a0, 0x0020
+	ori $a0, $a0, 0x0020
 	add $a3, $zero, $t5 		# Every month initialize array size counter			
 	add $a1, $zero, $zero		# Copies current month's address
 	lw $t9, 0($t4)
@@ -125,8 +125,9 @@ scalar_prod:
 		mult_lab2:
 			add $v0, $v0, $t3
 			addi $t0, $t0, -1
-			blez $t0, end_mult
+			blez $t0, go_back
 			j mult_lab2
+		go_back:
 			jr $ra
 		
 	end_summation:
