@@ -1,9 +1,8 @@
 # Floating point converter
 # Can only support mantissa for 2^-31 to (2^31-1) integers
-# Uses explicit chopping for rounding mantissa
 
 .data 0x10010030
-.word 2000000000
+.word 4
 .data 0x10010034
 .word 4
 .data 0x10010038
@@ -16,7 +15,7 @@ ori $t0, $t0, 0x0030
 lw $t1, 0($t0)
 
 add $t2, $zero, $zero
-beq $t1, $zero, end_float_conversion 
+beq $t1, $zero, end_float_conversion
 
 # Determine if positive or negative
 bgez $t1, positive_float
@@ -47,7 +46,7 @@ sll $t2, $t2, 23
 
 	  
 # Determine the mantissa
-addi $t8, $t4, -32
+addi 	$t8, 	$t4, -32
 sub $t8, $zero, $t8
 sllv $t1, $t1, $t8 
 srl $t1, $t1, 9
