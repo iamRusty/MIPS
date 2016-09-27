@@ -76,32 +76,45 @@ op_div:
 	  		j divisor_chop 
 	  	done_with_chopping:
 	
-#	addi $t9, $zero, 16 		# quotient bit counter
 	addi $t9, $zero, 24
+	addi $t7, $zero, $zero
+	# t7 - A	
 	integer_div_proper:
 	beq $t9, $zero, end_int_div
-	#sll $t0, $t0, 1			# Shift left
-	srl $t6, $t0, 31		# Determine MSB if 0 or 1
+
+	srl $t6, $t1, 23		# Determine MSB if 0 or 1
 	beq $t6, $zero, subtract	# if 0, subtract
-		sll $t0, $t0, 1   
-		srl $t7, $t0, 16		# extract upper 16 bit (A)
-		add $t8, $t7, $t1		# Add
-		sll $t8, $t8, 16		# Remove arithmetic-overflow
-		sll $t0, $t0, 16		# Zero-out upper 16 bit (A)
-		srl $t0, $t0, 16		# --
-		or $t0, $t0, $t8
+		sll $t0, $t0, 1			# Shift 1 left Q
+ 		sll $t7, $t7, 1			# Shift 1 left A
+		sll $t7, $t7, 8			# Remove MSB in 24 bit A
+		srl $t7, $t7, 8			# Return 
+		srl $s1, $t0, 24		# Get MSB of 24 bit Q 
+		beq $s1, zero, do_nothing_to_a
+			addi $t7, $t7, 1	
+		do_nothing_to_a:
+		sll $t0, $t0, 8			# Remove MSB in 24 bit Q
+		srl $t0, $t0, 8  	   	# Return
+		add $t7, $t7, $t1		# Add
+		sll $t7, $t7, 8			# Remove arithmetic-overflow
+		srl $t7, $t7, 8			# Return
 		j wag_na_magsubtract_wew  		
 	 subtract:
-	 	sll $t0, $t0, 1
-	 	srl $t7, $t0, 16		# Extract upper 16 bit (A)
-	 	sub $t8, $t7, $t1   	# subtract
-	 	sll $t8, $t8, 16		# Remove arithmetic overflow / Formats to upper bit
-	 	sll $t0, $t0, 16		# Zero-out upper 16 bit (A)
-	 	srl $t0, $t0, 16		# --
-	 	or $t0, $t0, $t8
+	 	sll $t0, $t0, 1			# Shift 1 left Q
+	 	sll $t7, $t7, 1			# Shift 1 left A
+	 	sll $t7, $t7, 8			# Remove MSB in 24 bit A
+	 	srl $t7, $t7, 8			# Return 
+	 	srl $s1, $t0, 24		# Get  MSB of 24 bit Q
+	 	beq $s1, zero, do_nothing_to_a_sub_version
+	 		addi $t7, $t7, 1
+	 	do_nothing_to_a_sub_version:
+	 	sll $t0, $t0, 8			# Remove MSB in 24 bit Q
+	 	srl $t0, $t0, 8  	   	# Return
+	 	sub $t7, $t7, $t1   	# Subtract
+	 	sll $t7, $t7, 8			# Remove arithmetic overflow (most likely, it won't overflow but who knows) .. no it really won't
+	 	sll $t7, $t7, 8			# Return
 	
 	wag_na_magsubtract_wew: 	 	
-	srl $t6, $t0, 31	# Determine MSB if 0 or 1
+	srl $t6, $t7, 23	# Determine MSB if 0 or 1
 	addi $t6, $t6, -1 
 	beq $t6 , $zero, do_nothing
 		add_one:
@@ -112,16 +125,16 @@ op_div:
 	
 	end_int_div:
 	
-	sll $t9, $t0, 16		# Extract lowest 16 bit 
-	srl $t9, $t9, 16
+	#sll $t9, $t0, 16		# Extract lowest 16 bit 
+	#srl $t9, $t9, 16
 	
-	# Make lowest 16 bit and 23 bit mantissa w/o the hidden bit
-	addi $t8, $zero, 15
-	addi $t7, $zero, 1 
+	# REMOVE HIDDEN BIT 
+	addi $t8, $zero, 23
+	addi $s2, $zero, 1 
 	mantissa_encode:
 	beq $t8, $zero, remove_hidden_bit
-	srl $t6, $t9, 15
-	beq $t6, $t7, remove_hidden_bit
+	srl $t6, $t0, 23
+	beq $t6, $s2, remove_hidden_bit
 		sll $t9, $t9, 1
 		addi, $t8, $t8, -1
 		j mantissa_encode
