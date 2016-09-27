@@ -1,8 +1,8 @@
 
 # Inputs are in float single precision format
 .text
-lui $a0, 0x4000
-lui $a1, 0x4110
+lui $a0, 0x4140
+lui $a1, 0x4000
 
 op_div: 
 	# 16-bit by 16-bit division in a 32-bit register
@@ -62,12 +62,12 @@ op_div:
 	# considering the target 16 bit br 16 bit division
 	# This can still be improved using 2 registers to store
 	# remainder and quotient adjacently	 
-#	srl $t0, $t0, 8		# From previous operation
+	srl $t0, $t0, 8		# From previous operation
 						#	24 bit mantissa chopped into 16 bit
 	# Make divisor as small as possible  without
 	# losing its mantissa's integrity
 	# shift right until there's (1) in LSB
-#	srl $t1, $t1, 8
+	srl $t1, $t1, 8
 	addi $t8, $zero, 1
 	divisor_chop:
 		andi $t9, $t1, 1
@@ -77,7 +77,7 @@ op_div:
 	  	done_with_chopping:
 	
 #	addi $t9, $zero, 16 		# quotient bit counter
-	addi $t9, $zero, 24
+	addi $t9, $zero, 16
 	integer_div_proper:
 	beq $t9, $zero, end_int_div
 	#sll $t0, $t0, 1			# Shift left
