@@ -1,8 +1,8 @@
 
 # Inputs are in float single precision format
 .text
-lui $a0, 0x4140
-lui $a1, 0x4000
+lui $a0, 0x41c8
+lui $a1, 0x4040
 
 op_div: 
 	# 16-bit by 16-bit division in a 32-bit register

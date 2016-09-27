@@ -1,8 +1,8 @@
 
 # Inputs are in float single precision format
 .text
-lui $a0, 0x4000
-lui $a1, 0x4110
+lui $a0, 0x42ca
+lui $a1, 0x40e0
 
 op_div: 
 	# 16-bit by 16-bit division in a 32-bit register
@@ -77,19 +77,19 @@ op_div:
 	  	done_with_chopping:
 	
 	addi $t9, $zero, 24
-	addi $t7, $zero, $zero
+	add $t7, $zero, $zero
 	# t7 - A	
 	integer_div_proper:
 	beq $t9, $zero, end_int_div
 
-	srl $t6, $t1, 23		# Determine MSB if 0 or 1
+	srl $t6, $t7, 23		# Determine MSB if 0 or 1
 	beq $t6, $zero, subtract	# if 0, subtract
 		sll $t0, $t0, 1			# Shift 1 left Q
  		sll $t7, $t7, 1			# Shift 1 left A
 		sll $t7, $t7, 8			# Remove MSB in 24 bit A
 		srl $t7, $t7, 8			# Return 
 		srl $s1, $t0, 24		# Get MSB of 24 bit Q 
-		beq $s1, zero, do_nothing_to_a
+		beq $s1, $zero, do_nothing_to_a
 			addi $t7, $t7, 1	
 		do_nothing_to_a:
 		sll $t0, $t0, 8			# Remove MSB in 24 bit Q
@@ -104,14 +104,14 @@ op_div:
 	 	sll $t7, $t7, 8			# Remove MSB in 24 bit A
 	 	srl $t7, $t7, 8			# Return 
 	 	srl $s1, $t0, 24		# Get  MSB of 24 bit Q
-	 	beq $s1, zero, do_nothing_to_a_sub_version
+	 	beq $s1, $zero, do_nothing_to_a_sub_version
 	 		addi $t7, $t7, 1
 	 	do_nothing_to_a_sub_version:
 	 	sll $t0, $t0, 8			# Remove MSB in 24 bit Q
 	 	srl $t0, $t0, 8  	   	# Return
 	 	sub $t7, $t7, $t1   	# Subtract
 	 	sll $t7, $t7, 8			# Remove arithmetic overflow (most likely, it won't overflow but who knows) .. no it really won't
-	 	sll $t7, $t7, 8			# Return
+	 	srl $t7, $t7, 8			# Return
 	
 	wag_na_magsubtract_wew: 	 	
 	srl $t6, $t7, 23	# Determine MSB if 0 or 1
@@ -135,14 +135,14 @@ op_div:
 	beq $t8, $zero, remove_hidden_bit
 	srl $t6, $t0, 23
 	beq $t6, $s2, remove_hidden_bit
-		sll $t9, $t9, 1
+		sll $t0, $t0, 1
 		addi, $t8, $t8, -1
 		j mantissa_encode
 	remove_hidden_bit:
-		sll $t9, $t9, 17
-		srl $t9, $t9, 9	 	 	     
+		sll $t0, $t0, 9
+		srl $t0, $t0, 9	 	 	     
 	
-	or $v0, $v0, $t9
+	or $v0, $v0, $t0
 	
 	lui $k0, 0x1001	
 	sw $v0, 0($k0)
