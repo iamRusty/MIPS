@@ -1,8 +1,8 @@
 
 # Inputs are in float single precision format
 .text
-lui $a0, 0x3f80
-lui $a1, 0x4040
+lui $a0, 0x423c # (47)
+lui $a1, 0x4150 # (13)
 
 op_div: 
 	# 16-bit by 16-bit division in a 32-bit register
@@ -12,8 +12,12 @@ op_div:
 	# t1 - a1 placeholder
 	# t2 - exponent 
 	
+	add $v0, $zero, $zero
+	beq $a0, $zero, jr_ra
+	lui $s7, 0x8000
+	beq $a0, $s7, jr_ra
 	
-	addi $v0, $zero, 1
+	addi $v0, $v0, 1 
 	
 	# Determine if negative or positive
 	srl $t0, $a0, 31
@@ -30,7 +34,7 @@ op_div:
 	srl $t0, $t0, 24
 	sll $t1, $a1, 1
 	srl $t1, $t1, 24
-	sub $t2, $t0, $t1	# Abosulute Exponent (difference)
+	sub $t2, $t0, $t1	# Abosolute Exponent (difference)
 					
 	# Determine if which has bigger mantissa
 	# if a0 => a1 then go on
@@ -59,9 +63,9 @@ op_div:
 	# 		Mantissa Division
 	#------------------------------
 	# Make dividend mantissa as big as possible
-	# considering the target 24 bit br 24 bit division
-	# This can still be improved using a 48 bit register for Q(Quotient)
-	# and a 24 bit register for A (Remainder) 
+	# considering the target 16 bit br 16 bit division
+	# This can still be improved using 2 registers to store
+	# remainder and quotient adjacently	 
 	sll $t0, $t0, 8		# From previous operation
 						#	24 bit mantissa chopped into 16 bit
 	# Make divisor as small as possible  without
@@ -76,7 +80,7 @@ op_div:
 	  		j divisor_chop 
 	  	done_with_chopping:
 	
-	addi $t9, $zero, 24
+	addi $t9, $zero, 32
 	add $t7, $zero, $zero
 	# t7 - A	
 	integer_div_proper:
@@ -84,31 +88,31 @@ op_div:
 
 	srl $t6, $t7, 23		# Determine MSB if 0 or 1
 	beq $t6, $zero, subtract	# if 0, subtract
+		srl $s1, $t0, 31		# Get MSB of 32 bit Q 
 		sll $t0, $t0, 1			# Shift 1 left Q
  		sll $t7, $t7, 1			# Shift 1 left A
 		sll $t7, $t7, 8			# Remove MSB in 24 bit A
 		srl $t7, $t7, 8			# Return 
-		srl $s1, $t0, 24		# Get MSB of 24 bit Q 
 		beq $s1, $zero, do_nothing_to_a
 			addi $t7, $t7, 1	
 		do_nothing_to_a:
-		sll $t0, $t0, 8			# Remove MSB in 24 bit Q
-		srl $t0, $t0, 8  	   	# Return
+		#sll $t0, $t0, 8			# Remove MSB in 24 bit Q
+		#srl $t0, $t0, 8  	   	# Return
 		add $t7, $t7, $t1		# Add
 		sll $t7, $t7, 8			# Remove arithmetic-overflow
 		srl $t7, $t7, 8			# Return
 		j wag_na_magsubtract_wew  		
 	 subtract:
+	 	srl $s1, $t0, 31		# Get  MSB of 32 bit Q
 	 	sll $t0, $t0, 1			# Shift 1 left Q
 	 	sll $t7, $t7, 1			# Shift 1 left A
 	 	sll $t7, $t7, 8			# Remove MSB in 24 bit A
 	 	srl $t7, $t7, 8			# Return 
-	 	srl $s1, $t0, 24		# Get  MSB of 24 bit Q
 	 	beq $s1, $zero, do_nothing_to_a_sub_version
 	 		addi $t7, $t7, 1
 	 	do_nothing_to_a_sub_version:
-	 	sll $t0, $t0, 8			# Remove MSB in 24 bit Q
-	 	srl $t0, $t0, 8  	   	# Return
+	 	#sll $t0, $t0, 8			# Remove MSB in 24 bit Q
+	 	#srl $t0, $t0, 8  	   	# Return
 	 	sub $t7, $t7, $t1   	# Subtract
 	 	sll $t7, $t7, 8			# Remove arithmetic overflow (most likely, it won't overflow but who knows) .. no it really won't
 	 	srl $t7, $t7, 8			# Return
@@ -129,20 +133,23 @@ op_div:
 	#srl $t9, $t9, 16
 	
 	# REMOVE HIDDEN BIT 
-	addi $t8, $zero, 23
+	addi $t8, $zero, 31
 	addi $s2, $zero, 1 
 	mantissa_encode:
 	beq $t8, $zero, remove_hidden_bit
-	srl $t6, $t0, 23
+	srl $t6, $t0, 31
 	beq $t6, $s2, remove_hidden_bit
 		sll $t0, $t0, 1
 		addi, $t8, $t8, -1
 		j mantissa_encode
 	remove_hidden_bit:
-		sll $t0, $t0, 9
+		sll $t0, $t0, 1
 		srl $t0, $t0, 9	 	 	     
 	
 	or $v0, $v0, $t0
+        
+        jr_ra:    
+	#jr $ra
 	
 	lui $k0, 0x1001	
 	sw $v0, 0($k0)
