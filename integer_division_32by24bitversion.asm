@@ -5,7 +5,7 @@ lui $a0, 0x423c # (47)
 lui $a1, 0x4150 # (13)
 
 op_div: 
-	# 16-bit by 16-bit division in a 32-bit register
+	# 32-bit by 24-bit division in a 32-bit register
 	# a0 - dividend (input)
 	# a1 - divisor (input)
 	# t0 - a0 placeholder
@@ -34,7 +34,7 @@ op_div:
 	srl $t0, $t0, 24
 	sll $t1, $a1, 1
 	srl $t1, $t1, 24
-	sub $t2, $t0, $t1	# Abosolute Exponent (difference)
+	sub $t2, $t0, $t1	# Absolute Exponent (difference)
 					
 	# Determine if which has bigger mantissa
 	# if a0 => a1 then go on
@@ -63,15 +63,14 @@ op_div:
 	# 		Mantissa Division
 	#------------------------------
 	# Make dividend mantissa as big as possible
-	# considering the target 16 bit br 16 bit division
+	# considering the target 32 bit by 24 bit division
 	# This can still be improved using 2 registers to store
-	# remainder and quotient adjacently	 
+	# quotient(48 bit) and 1 register for Q (24 bit)	 
 	sll $t0, $t0, 8		# From previous operation
-						#	24 bit mantissa chopped into 16 bit
 	# Make divisor as small as possible  without
 	# losing its mantissa's integrity
 	# shift right until there's (1) in LSB
-#	srl $t1, $t1, 8
+
 	addi $t8, $zero, 1
 	divisor_chop:
 		andi $t9, $t1, 1
@@ -96,8 +95,6 @@ op_div:
 		beq $s1, $zero, do_nothing_to_a
 			addi $t7, $t7, 1	
 		do_nothing_to_a:
-		#sll $t0, $t0, 8			# Remove MSB in 24 bit Q
-		#srl $t0, $t0, 8  	   	# Return
 		add $t7, $t7, $t1		# Add
 		sll $t7, $t7, 8			# Remove arithmetic-overflow
 		srl $t7, $t7, 8			# Return
@@ -111,8 +108,6 @@ op_div:
 	 	beq $s1, $zero, do_nothing_to_a_sub_version
 	 		addi $t7, $t7, 1
 	 	do_nothing_to_a_sub_version:
-	 	#sll $t0, $t0, 8			# Remove MSB in 24 bit Q
-	 	#srl $t0, $t0, 8  	   	# Return
 	 	sub $t7, $t7, $t1   	# Subtract
 	 	sll $t7, $t7, 8			# Remove arithmetic overflow (most likely, it won't overflow but who knows) .. no it really won't
 	 	srl $t7, $t7, 8			# Return
@@ -128,9 +123,6 @@ op_div:
 	j integer_div_proper
 	
 	end_int_div:
-	
-	#sll $t9, $t0, 16		# Extract lowest 16 bit 
-	#srl $t9, $t9, 16
 	
 	# REMOVE HIDDEN BIT 
 	addi $t8, $zero, 31
@@ -148,7 +140,7 @@ op_div:
 	
 	or $v0, $v0, $t0
         
-        jr_ra:    
+        jr_ra:  #end   
 	#jr $ra
 	
 	lui $k0, 0x1001	
